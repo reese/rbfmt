@@ -1,10 +1,14 @@
-# rubyfmt
+# rbfmt
 
 A fast, opinionated Ruby formatter written in Rust.
 
 - Try it online → [rubyfmt.run](https://rubyfmt.run)
 
 Pronunciation: (en) "Ruby Format", (jp) ルビーフォーマット
+
+## About This Fork
+
+This is a fork of [fables-tales/rubyfmt](https://github.com/fables-tales/rubyfmt) with some experimental changes in the output.
 
 ## Quick Start
 
@@ -101,12 +105,12 @@ Rubyfmt is also supported by the (now-deprecated) [VSCode Ruby extension](https:
 }
 ```
 
-This is additionally supported by the [Formatto for VS Code](https://marketplace.visualstudio.com/items?itemName=damolinx.formatto) extension.  Use it as your project's formatter by adding this entry to your `.vscode/settings.json` after installing the extension: 
+This is additionally supported by the [Formatto for VS Code](https://marketplace.visualstudio.com/items?itemName=damolinx.formatto) extension. Use it as your project's formatter by adding this entry to your `.vscode/settings.json` after installing the extension:
 
 ```jsonc
 {
   "[ruby]": {
-    "editor.defaultFormatter": "damolinx.formatto"
+    "editor.defaultFormatter": "damolinx.formatto",
   },
 }
 ```
