@@ -32,6 +32,10 @@ jobs:
         with:
           ruby-version: "4.0.7"
           bundler: none
+      - name: Install Prism
+        run: |
+          gem install prism -v 2.1.0 --no-document
+          ruby -e 'require "prism"; puts "Prism #{Prism::VERSION}"'
       - name: Cache corpus checkouts
         uses: actions/cache@v4
         with:

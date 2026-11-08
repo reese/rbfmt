@@ -18,8 +18,10 @@ per-file hashes live in git.
 
 ## Requirements
 
-- Ruby **4.0.7** (Prism **2.1.0**) to match the committed snapshot.
-  `ruby -e 'require "prism"; puts Prism::VERSION'`.
+- Ruby **4.0.7** (or 3.3+) with the **Prism 2.1.0** gem installed, to match the
+  committed snapshot. Ruby 4.0.7 ships Prism 1.8.1, so install the gem explicitly:
+  `gem install prism -v 2.1.0 --no-document`.
+  Verify with `ruby -e 'require "prism"; puts Prism::VERSION'`.
 - Git.
 - Rust/Cargo for building rubyfmt and for `compare`.
 - A release rubyfmt binary: `cargo build --release --locked`
@@ -168,11 +170,11 @@ use; you do not need to build it yourself.
 `corpus/corpus.yml` is a YAML list. Each entry has:
 
 ```yaml
-- name: rails                 # unique, lowercase
+- name: rails # unique, lowercase
   url: https://github.com/rails/rails
-  sha: 8384b38f150663b2fd510926f38a2958bd5ac1db   # full 40-character SHA
-  kind: framework            # app | gem | framework | tool (informational)
-  tier: full                 # fast (PR subset) | full
+  sha: 8384b38f150663b2fd510926f38a2958bd5ac1db # full 40-character SHA
+  kind: framework # app | gem | framework | tool (informational)
+  tier: full # fast (PR subset) | full
   include:
     - "**/*.rb"
     - "**/*.rake"
@@ -265,7 +267,7 @@ snapshot and commit the config change with it.
 `.github/workflows/corpus.yml`:
 
 - builds `target/release/rubyfmt-main`;
-- uses Ruby 4.0.7;
+- uses Ruby 4.0.7 and installs the Prism 2.1.0 gem;
 - caches `~/.cache/rubyfmt-corpus/repos` keyed on `corpus/corpus.yml`;
 - runs `--tier fast` on PRs/pushes and `--tier full` on the weekly schedule and
   manual dispatch;
