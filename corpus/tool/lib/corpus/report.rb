@@ -426,7 +426,7 @@ module Corpus
     end
 
     def render_diff(diff)
-      diff.split("\n", -1).map { |line| render_diff_line(line) }.join("\n")
+      utf8(diff).split("\n", -1).map { |line| render_diff_line(line) }.join("\n")
     end
 
     def render_diff_line(line)
@@ -477,13 +477,20 @@ module Corpus
         .map do |file|
           header = "### #{file.repo}/#{file.path}"
           body = file.diff && !file.diff.empty? ? file.diff : "(no diff available)\n"
-          "#{header}\n\n#{body}"
+          "#{header}\n\n#{utf8(body)}"
         end
         .join("\n")
     end
 
     def h(value)
-      CGI.escapeHTML(value.to_s)
+      CGI.escapeHTML(utf8(value))
+    end
+
+    # Formatted output and input files are read as binary, but reports and
+    # terminal output are UTF-8. Normalize before interpolating so non-ASCII
+    # bytes can't raise Encoding::CompatibilityError.
+    def utf8(value)
+      value.to_s.dup.force_encoding(Encoding::UTF_8).scrub
     end
   end
 end
