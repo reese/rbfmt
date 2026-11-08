@@ -12,7 +12,7 @@ simplelog = "0.12"
 ruby-prism="2.1.0"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = { version = "0.6.1", features = ["disable_initial_exec_tls"], optional=true }
+tikv-jemallocator = { version = "0.7.0", features = ["disable_initial_exec_tls"], optional=true }
 
 [lib]
 name = "rubyfmt"
