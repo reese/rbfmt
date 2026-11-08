@@ -15,3 +15,6 @@ log
 
 /target
 rubyfmt-v*.tar.gz*
+
+# rubyfmt corpus reports and local results
+corpus-report/

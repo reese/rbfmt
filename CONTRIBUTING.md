@@ -14,6 +14,17 @@ in particular `cargo test --test fixtures_test` is what I use for ongoing
 development when I'm testing a new feature, which I usually start by committing
 a new fixture.
 
+## Corpus Regression Testing
+
+Formatting regressions are checked against a pinned, open-source Ruby corpus.
+The corpus manifest, snapshot, CLI, and reports live in [`corpus/`](./corpus/README.md).
+
+```sh
+cargo build --release --locked
+ruby corpus/tool/corpus check --tier fast --rubyfmt target/release/rubyfmt-main
+ruby corpus/tool/corpus compare
+```
+
 ## Autoformatting
 
 Run `make fmt` to cleanup formatting for CI

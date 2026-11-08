@@ -1,0 +1,240 @@
+# rubyfmt corpus manifest.
+# Each project is pinned to a full commit SHA.
+# Bump a SHA with: ruby corpus/tool/corpus bump <name> [sha-or-ref]
+# Validate with:   ruby corpus/tool/corpus validate
+---
+- name: activeadmin
+  url: https://github.com/activeadmin/activeadmin
+  sha: 62bf0e6e6c961af02d940ff86367706fe120c3c9
+  kind: gem
+  tier: full
+  include: &ruby_includes
+    - "**/*.rb"
+    - "**/*.rake"
+    - "**/*.gemspec"
+    - "**/Rakefile"
+    - "**/Gemfile"
+    - "**/config.ru"
+  exclude: &ruby_excludes
+    - "**/.git/**"
+    - "**/vendor/**"
+    - "**/node_modules/**"
+    - "**/tmp/**"
+    - "**/coverage/**"
+    - "**/fixtures/**"
+
+- name: capybara
+  url: https://github.com/teamcapybara/capybara
+  sha: 265d2d175f4be3ddf785d7597bdfd19b231f844a
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: devise
+  url: https://github.com/heartcombo/devise
+  sha: 05811fb8366edd08874111d0f6fb44543e1c91ef
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: discourse
+  url: https://github.com/discourse/discourse
+  sha: 444e62cc26e96c7da97f08fa45df219f03f60114
+  kind: app
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: dry-schema
+  url: https://github.com/dry-rb/dry-schema
+  sha: cbf261d3f089241c29f8998adbe81e5b49fb7951
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: dry-types
+  url: https://github.com/dry-rb/dry-types
+  sha: 7b0ab607c41eda6420672ff028f81b2a6f8ba64c
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: faker
+  url: https://github.com/faker-ruby/faker
+  sha: 577447c403c67c92200bca045390c3dfdb6d643b
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: fastlane
+  url: https://github.com/fastlane/fastlane
+  sha: 97a58902af8f528d256369b70554579b8c1520dd
+  kind: tool
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: hanami
+  url: https://github.com/hanami/hanami
+  sha: 8b3dedf908606f20fe7636658319e48dc14edfa8
+  kind: framework
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: homebrew
+  url: https://github.com/Homebrew/brew
+  sha: 3ccfa1d071435faf83990f0788d18920ab90d817
+  kind: tool
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: httparty
+  url: https://github.com/jnunemaker/httparty
+  sha: 329f47c3cf5f072f6b8b9972415774bcca3c46d7
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: huginn
+  url: https://github.com/huginn/huginn
+  sha: 62c9d80dc59d82c6757a46f1b68e2dd9a4939038
+  kind: app
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: jekyll
+  url: https://github.com/jekyll/jekyll
+  sha: 97c3bdc822df9d5bea4c269b29a28de5a5e29d70
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: mastodon
+  url: https://github.com/mastodon/mastodon
+  sha: 4dff13d48694e302d1a161b3d0795284a512b482
+  kind: app
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: pry
+  url: https://github.com/pry/pry
+  sha: 0c7a4123c8ddc34a7f7b50f602e0c5cba21b9716
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: puma
+  url: https://github.com/puma/puma
+  sha: c9f6710aa7f83000b03f1abdbc7fa1bf510a13a7
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rack
+  url: https://github.com/rack/rack
+  sha: da90464e3fa93e3cb49dc2d4ede798e6c6b70b4f
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rails
+  url: https://github.com/rails/rails
+  sha: 8384b38f150663b2fd510926f38a2958bd5ac1db
+  kind: framework
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rake
+  url: https://github.com/ruby/rake
+  sha: 3f29d39daa688eb51cd975c06b1501320f10b911
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rspec-core
+  url: https://github.com/rspec/rspec-core
+  sha: aec5f49485d97908183dbe790a7fefb8baaa8091
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rspec-rails
+  url: https://github.com/rspec/rspec-rails
+  sha: 97b5883696486fe51c49b8910fdfb9308355bc98
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rubocop
+  url: https://github.com/rubocop/rubocop
+  sha: 89b5a60b4378a7f3be5462111de281e59c21c62b
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: rubygems
+  url: https://github.com/rubygems/rubygems
+  sha: 471ba50ad8bf7d2d624b70bae68de87bf36a42d6
+  kind: tool
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: sidekiq
+  url: https://github.com/sidekiq/sidekiq
+  sha: 75982898ff6dc984988da8b9ecf5371eba68e120
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: sinatra
+  url: https://github.com/sinatra/sinatra
+  sha: cb22afd7902b566b6eaba6c4ea89739494a65d12
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: thor
+  url: https://github.com/rails/thor
+  sha: cb11e8e87b3cfe6bc9f6d4b092897f0dfda2476d
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: tty-prompt
+  url: https://github.com/piotrmurach/tty-prompt
+  sha: 2c2c44e8b1d4affe9926bc87c3740000dcf7f2f7
+  kind: gem
+  tier: full
+  include: *ruby_includes
+  exclude: *ruby_excludes
+
+- name: webmock
+  url: https://github.com/bblimke/webmock
+  sha: 11392e455b9ee025b72cbebcaaa9e0a9f201bac0
+  kind: gem
+  tier: fast
+  include: *ruby_includes
+  exclude: *ruby_excludes

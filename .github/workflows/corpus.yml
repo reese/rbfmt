@@ -1,0 +1,97 @@
+name: Corpus
+
+on:
+  push:
+    branches: [trunk]
+  pull_request:
+    branches: [trunk]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: corpus-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  corpus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions-rust-lang/setup-rust-toolchain@ecabd13d1c56bd1345c230e542e9144811ad706f # v2.0.0
+        with:
+          toolchain: stable
+          override: true
+      - name: Build rubyfmt
+        run: cargo build --release --locked
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "4.0.7"
+          bundler: none
+      - name: Cache corpus checkouts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/rubyfmt-corpus/repos
+          key: corpus-${{ runner.os }}-${{ hashFiles('corpus/corpus.yml') }}
+          restore-keys: |
+            corpus-${{ runner.os }}-
+      - name: Run corpus check
+        id: corpus
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tier=full
+          else
+            tier=fast
+          fi
+          ruby corpus/tool/corpus check \
+            --tier "$tier" \
+            --jobs 4 \
+            --rubyfmt target/release/rubyfmt-main \
+            --report-dir corpus-report
+      - name: Upload corpus report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: corpus-report
+          path: corpus-report
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Add report to job summary
+        if: always()
+        run: |
+          if [ -f corpus-report/summary.md ]; then
+            cat corpus-report/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Comment on pull request
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          CORPUS_OUTCOME: ${{ steps.corpus.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'corpus-report/summary.md';
+            const marker = '<!-- rubyfmt-corpus-report -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (process.env.CORPUS_OUTCOME !== 'failure') {
+              if (existing) {
+                const body = `${marker}\n:white_check_mark: rubyfmt corpus check passed: no formatting changes.`;
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+              }
+              return;
+            }
+            if (!fs.existsSync(path)) return;
+            const body = `${marker}\n${fs.readFileSync(path, 'utf8')}`;
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
