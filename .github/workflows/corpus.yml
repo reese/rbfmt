@@ -37,7 +37,7 @@ jobs:
           gem install prism -v 2.1.0 --no-document
           ruby -e 'require "prism"; puts "Prism #{Prism::VERSION}"'
       - name: Cache corpus checkouts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/rubyfmt-corpus/repos
           key: corpus-${{ runner.os }}-${{ hashFiles('corpus/corpus.yml') }}
