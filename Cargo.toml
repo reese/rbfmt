@@ -16,7 +16,7 @@ clap = { version = "4.5.32", features = ["derive"] }
 ctrlc = { version = "3.2", features = ["termination"] }
 ignore = "0.4.26"
 rubyfmt = { path = "./librubyfmt" }
-similar = { version = "2.7.0", features = ["bytes"] }
+similar = { version = "3.2.1", features = ["bytes"] }
 
 [dev-dependencies]
 assert_cmd = "2"
