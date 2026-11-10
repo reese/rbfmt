@@ -64,8 +64,8 @@ ruby corpus/tool/corpus validate
 ```
 
 Validates `corpus.yml` (unique names, full 40-character SHAs, known kinds/tiers,
-valid globs) and, when present, `snapshot.json` (version, per-repo rollups, global
-rollup).
+valid globs) and, when present, `snapshot/` (version, config, per-repo files and
+rollups, global rollup).
 
 ### `fetch`
 
@@ -109,7 +109,7 @@ Formats the selected corpus and emits a result JSON (`-` writes it to stdout).
 ruby corpus/tool/corpus check --tier fast --rubyfmt target/release/rubyfmt-main
 ```
 
-Runs the corpus, compares against `corpus/snapshot.json`, writes
+Runs the corpus, compares against `corpus/snapshot/`, writes
 `corpus-report/{report.html,summary.md,results.json,outputs/}`, prints a summary,
 and exits non-zero when anything differs. This is the CI entry point.
 
@@ -199,20 +199,38 @@ To add a project: append an entry, run `fetch`, then `snapshot update`.
 
 ## Snapshot format
 
-`corpus/snapshot.json` is deliberately stable and diff-friendly:
+`corpus/snapshot/` is deliberately stable and diff-friendly. Each repository has
+its own file, so a formatting change only touches the affected repo's JSON:
+
+```text
+corpus/snapshot/
+  index.json              version, config, global rollup, repo list
+  repos/activeadmin.json
+  repos/rails.json
+  ...
+```
+
+Each `repos/<name>.json` contains the pinned `sha`, the repo rollup, and its file
+entries:
+
+```json
+{
+  "sha": "...",
+  "rollup": "...",
+  "files": {
+    "app/models/user.rb": {"status":"ok","output_sha256":"..."},
+    "lib/example.rb": {"status":"error","error_kind":"syntax_error","error_sha256":"..."}
+  }
+}
+```
+
+The snapshot is stable and diff-friendly:
 
 - repos and paths are sorted;
 - each file entry is on one line;
 - only hashes/status/check failures are stored;
 - per-repo and global rollups are SHA-256 over the sorted entries;
 - `config` records `header_mode`, `checks`, `prism_version`, and `ruby_version`.
-
-Example entry:
-
-```json
-"app/models/user.rb": {"status":"ok","output_sha256":"..."}
-"lib/example.rb": {"status":"error","error_kind":"syntax_error","error_sha256":"..."}
-```
 
 Known failures are recorded as error entries, so a pre-existing failure is not
 new noise. A new crash or a changed error message is a change. Skipped files
@@ -224,7 +242,7 @@ PR:
 
 ```sh
 ruby corpus/tool/corpus snapshot update --rubyfmt target/release/rubyfmt-main
-git add corpus/snapshot.json
+git add corpus/snapshot
 ```
 
 ## Correctness checks
@@ -313,7 +331,9 @@ panics, header opt-in/out, idempotence/validity), and HTML report rendering.
 ```text
 corpus/
   corpus.yml          committed manifest
-  snapshot.json       committed snapshot
+  snapshot/           committed snapshot, one file per repo
+    index.json        version, config, global rollup, repo list
+    repos/*.json      per-repo sha, rollup, and file entries
   README.md
   tool/
     corpus            executable entry point

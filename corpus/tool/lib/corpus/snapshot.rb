@@ -1,4 +1,5 @@
 require "digest"
+require "fileutils"
 require "json"
 
 module Corpus
@@ -8,6 +9,8 @@ module Corpus
   class Snapshot
     VERSION = 1
     CHECK_FIELDS = %w[idempotence validity].freeze
+    INDEX_FILE = "index.json"
+    REPOS_DIR = "repos"
 
     SnapshotDiff = Struct.new(:repo, :path, :old_entry, :new_entry, keyword_init: true) do
       def kind
@@ -123,13 +126,38 @@ module Corpus
 
     class << self
       def load(path = Corpus::DEFAULT_SNAPSHOT_PATH)
-        data = JSON.parse(File.read(path))
+        data = File.directory?(path) ? load_directory(path) : JSON.parse(File.read(path))
         validate!(data)
         data
       rescue Errno::ENOENT
         raise SnapshotError, "snapshot not found: #{path}; run `ruby corpus/tool/corpus snapshot update`"
       rescue JSON::ParserError => e
         raise SnapshotError, "could not parse #{path}: #{e.message}"
+      end
+
+      def exist?(path)
+        File.exist?(path)
+      end
+
+      def load_directory(path)
+        index_path = File.join(path, INDEX_FILE)
+        index = JSON.parse(File.read(index_path))
+        repos = {}
+        Dir[File.join(path, REPOS_DIR, "*.json")].sort.each do |file|
+          repos[File.basename(file, ".json")] = JSON.parse(File.read(file))
+        end
+
+        names = index["repos"]
+        if names && (!names.is_a?(Array) || names.sort != repos.keys.sort)
+          raise SnapshotError, "#{path}: index repository list does not match #{REPOS_DIR}/"
+        end
+
+        {
+          "version" => index["version"],
+          "config" => index["config"],
+          "rollup" => index["rollup"],
+          "repos" => repos
+        }
       end
 
       def from_result_set(result_set)
@@ -199,7 +227,20 @@ module Corpus
       def write(path, snapshot)
         finalize!(snapshot)
         validate!(snapshot)
-        File.write(path, dump(snapshot))
+        contents = dump_files(snapshot)
+        repos_dir = File.join(path, REPOS_DIR)
+        FileUtils.mkdir_p(repos_dir)
+        expected = contents.keys
+          .select { |relative| relative.start_with?("#{REPOS_DIR}/") }
+          .to_h { |relative| [File.basename(relative), true] }
+        Dir[File.join(repos_dir, "*.json")].each do |file|
+          File.delete(file) unless expected[File.basename(file)]
+        end
+        contents.each do |relative, content|
+          destination = File.join(path, relative)
+          FileUtils.mkdir_p(File.dirname(destination))
+          File.write(destination, content)
+        end
         snapshot
       end
 
@@ -278,48 +319,62 @@ module Corpus
         )
       end
 
-      def dump(snapshot)
+      # Returns the snapshot directory contents as {relative path => JSON text}.
+      def dump_files(snapshot)
         snapshot = finalize!(deep_copy(snapshot))
+        files = {INDEX_FILE => dump_index(snapshot)}
+        (snapshot["repos"] || {}).keys.sort.each do |name|
+          files["#{REPOS_DIR}/#{name}.json"] = dump_repo(snapshot["repos"][name])
+        end
+        files
+      end
+
+      def dump_index(snapshot)
         config = snapshot["config"]
-        lines = []
-        lines << "{"
-        lines << "  \"version\": #{VERSION},"
         config_payload = {
           "header_mode" => config["header_mode"],
           "checks" => Array(config["checks"]).sort
         }
         config_payload["prism_version"] = config["prism_version"] if config.key?("prism_version")
         config_payload["ruby_version"] = config["ruby_version"] if config.key?("ruby_version")
+        repos = snapshot["repos"] || {}
+        lines = []
+        lines << "{"
+        lines << "  \"version\": #{VERSION},"
         lines << "  \"config\": #{JSON.generate(config_payload)},"
         lines << "  \"rollup\": #{JSON.generate(snapshot["rollup"])},"
-        repos = snapshot["repos"] || {}
         if repos.empty?
-          lines << "  \"repos\": {}"
+          lines << "  \"repos\": []"
         else
-          lines << "  \"repos\": {"
-          repo_names = repos.keys.sort
-          repo_names.each_with_index do |name, index|
-            repo = repos[name]
-            lines << "    #{JSON.generate(name)}: {"
-            lines << "      \"sha\": #{JSON.generate(repo["sha"])},"
-            lines << "      \"rollup\": #{JSON.generate(repo["rollup"])},"
-            files = repo["files"] || {}
-            if files.empty?
-              lines << "      \"files\": {}"
-            else
-              lines << "      \"files\": {"
-              paths = files.keys.sort
-              paths.each_with_index do |path, path_index|
-                entry = ordered_entry(files[path])
-                comma = path_index == paths.length - 1 ? "" : ","
-                lines << "        #{JSON.generate(path)}: #{JSON.generate(entry)}#{comma}"
-              end
+          lines << "  \"repos\": ["
+          names = repos.keys.sort
+          names.each_with_index do |name, index|
+            comma = index == names.length - 1 ? "" : ","
+            lines << "    #{JSON.generate(name)}#{comma}"
+          end
 
-              lines << "      }"
-            end
+          lines << "  ]"
+        end
 
-            comma = index == repo_names.length - 1 ? "" : ","
-            lines << "    }#{comma}"
+        lines << "}"
+        "#{lines.join("\n")}\n"
+      end
+
+      def dump_repo(repo)
+        files = repo["files"] || {}
+        lines = []
+        lines << "{"
+        lines << "  \"sha\": #{JSON.generate(repo["sha"])},"
+        lines << "  \"rollup\": #{JSON.generate(repo["rollup"])},"
+        if files.empty?
+          lines << "  \"files\": {}"
+        else
+          lines << "  \"files\": {"
+          paths = files.keys.sort
+          paths.each_with_index do |path, index|
+            entry = ordered_entry(files[path])
+            comma = index == paths.length - 1 ? "" : ","
+            lines << "    #{JSON.generate(path)}: #{JSON.generate(entry)}#{comma}"
           end
 
           lines << "  }"

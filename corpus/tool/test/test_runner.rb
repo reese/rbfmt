@@ -195,7 +195,7 @@ class RunnerTest < Minitest::Test
     second = runner(binary, checks: %w[idempotence validity]).run
     first_snapshot = Corpus::Snapshot.from_result_set(first)
     second_snapshot = Corpus::Snapshot.from_result_set(second)
-    assert_equal(Corpus::Snapshot.dump(first_snapshot), Corpus::Snapshot.dump(second_snapshot))
+    assert_equal(Corpus::Snapshot.dump_files(first_snapshot), Corpus::Snapshot.dump_files(second_snapshot))
   end
 end
 

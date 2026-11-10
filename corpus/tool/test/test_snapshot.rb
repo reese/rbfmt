@@ -62,15 +62,50 @@ class SnapshotTest < Minitest::Test
     Corpus::Snapshot.from_result_set(result_set(files))
   end
 
-  def test_dump_is_sorted_and_roundtrips
+  def test_dump_files_are_sorted_and_roundtrip
     snapshot = snapshot_from([file("z.rb", output: "z"), file("a.rb", output: "a")])
-    dumped = Corpus::Snapshot.dump(snapshot)
-    assert_operator(dumped.index("\"a.rb\""), :<, dumped.index("\"z.rb\""))
-    parsed = JSON.parse(dumped)
-    assert(Corpus::Snapshot.validate!(parsed))
-    assert_equal(snapshot["rollup"], parsed["rollup"])
-    assert_equal(Corpus::Runner.prism_version, parsed["config"]["prism_version"])
-    assert_includes(dumped, "\"a.rb\": {\"status\":\"ok\",\"output_sha256\":\"a\"}")
+    files = Corpus::Snapshot.dump_files(snapshot)
+    assert_equal(["index.json", "repos/sample.json"], files.keys)
+    repo = files["repos/sample.json"]
+    assert_operator(repo.index("\"a.rb\""), :<, repo.index("\"z.rb\""))
+    assert_includes(repo, "\"a.rb\": {\"status\":\"ok\",\"output_sha256\":\"a\"}")
+
+    index = JSON.parse(files["index.json"])
+    assert_equal(["sample"], index["repos"])
+    assert_equal(snapshot["rollup"], index["rollup"])
+    assert_equal(Corpus::Runner.prism_version, index["config"]["prism_version"])
+
+    path = File.join(@root, "snapshot")
+    Corpus::Snapshot.write(path, snapshot)
+    loaded = Corpus::Snapshot.load(path)
+    assert(Corpus::Snapshot.validate!(loaded))
+    assert_equal(snapshot["rollup"], loaded["rollup"])
+    assert_equal(snapshot["repos"], loaded["repos"])
+  end
+
+  def test_loads_legacy_single_file_snapshot
+    snapshot = snapshot_from([file("a.rb")])
+    path = File.join(@root, "snapshot.json")
+    File.write(path, JSON.generate(snapshot))
+    loaded = Corpus::Snapshot.load(path)
+    assert_equal(snapshot["rollup"], loaded["rollup"])
+    assert_equal(snapshot["repos"], loaded["repos"])
+  end
+
+  def test_write_removes_stale_repo_files
+    path = File.join(@root, "snapshot")
+    old_snapshot = snapshot_from([file("a.rb")])
+    old_snapshot["repos"]["other"] = {
+      "sha" => "b" * 40,
+      "files" => {"other.rb" => {"status" => "ok", "output_sha256" => "x"}}
+    }
+    Corpus::Snapshot.finalize!(old_snapshot)
+    Corpus::Snapshot.write(path, old_snapshot)
+    assert(File.file?(File.join(path, "repos", "other.json")))
+
+    Corpus::Snapshot.write(path, snapshot_from([file("a.rb")]))
+    refute(File.file?(File.join(path, "repos", "other.json")))
+    assert_equal(["sample"], Corpus::Snapshot.load(path)["repos"].keys)
   end
 
   def test_comparison_reports_added_removed_and_changed

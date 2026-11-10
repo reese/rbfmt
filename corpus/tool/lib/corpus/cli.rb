@@ -50,7 +50,7 @@ module Corpus
       parser = OptionParser.new do |p|
         p.banner = "Usage: corpus validate [options]"
         p.on("--manifest PATH", "Path to corpus.yml") { |value| opts[:manifest] = value }
-        p.on("--snapshot PATH", "Path to snapshot.json") { |value| opts[:snapshot] = value }
+        p.on("--snapshot PATH", "Path to snapshot directory") { |value| opts[:snapshot] = value }
         p.on("--quiet", "Suppress output") { opts[:quiet] = true }
       end
 
@@ -58,7 +58,7 @@ module Corpus
 
       manifest = Manifest.new(opts[:manifest])
       manifest.validate!
-      if File.file?(opts[:snapshot])
+      if Snapshot.exist?(opts[:snapshot])
         Snapshot.load(opts[:snapshot])
       end
 
@@ -182,7 +182,7 @@ module Corpus
       manifest = load_manifest(opts)
       projects = select_projects(manifest, opts)
       snapshot_path = File.expand_path(opts[:snapshot])
-      snapshot = Snapshot.load(snapshot_path) if File.file?(snapshot_path)
+      snapshot = Snapshot.load(snapshot_path) if Snapshot.exist?(snapshot_path)
       if snapshot.nil? && !opts[:update]
         raise SnapshotError, "snapshot not found: #{snapshot_path}; run `ruby corpus/tool/corpus snapshot update`"
       end
@@ -305,7 +305,7 @@ module Corpus
         checks: checks
       )
       new_snapshot = Snapshot.from_result_set(results)
-      if File.file?(snapshot_path) && !opts[:replace] && projects.length < manifest.projects.length
+      if Snapshot.exist?(snapshot_path) && !opts[:replace] && projects.length < manifest.projects.length
         old_snapshot = Snapshot.load(snapshot_path)
         if old_snapshot["config"] != new_snapshot["config"]
           @stderr.puts("warning: snapshot config changed; old projects may need a full refresh")
@@ -458,7 +458,7 @@ module Corpus
         opts[:cache_root] = value
       }
       parser.on("--manifest PATH", "Path to corpus.yml") { |value| opts[:manifest] = value }
-      parser.on("--snapshot PATH", "Path to snapshot.json") { |value| opts[:snapshot] = value }
+      parser.on("--snapshot PATH", "Path to snapshot directory") { |value| opts[:snapshot] = value }
       parser.on("--refresh", "Ignore cached run results") { opts[:refresh] = true }
       parser.on("--quiet", "Suppress progress output") { opts[:quiet] = true }
     end
@@ -688,7 +688,7 @@ module Corpus
           Usage: ruby corpus/tool/corpus <command> [options]
 
           Commands:
-            validate               Validate corpus.yml and snapshot.json
+            validate               Validate corpus.yml and the snapshot
             fetch                  Fetch pinned corpus repositories
             bump NAME [SHA_OR_REF] Update a pinned project (defaults to remote HEAD)
             run                    Format the corpus and write a result JSON
@@ -706,7 +706,7 @@ module Corpus
             --rubyfmt PATH         rubyfmt binary
             --cache-root DIR       Corpus cache directory
             --manifest PATH        corpus.yml path
-            --snapshot PATH        snapshot.json path
+            --snapshot PATH        snapshot directory path
 
           Examples:
             ruby corpus/tool/corpus validate
